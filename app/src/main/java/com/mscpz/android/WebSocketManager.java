@@ -8,7 +8,7 @@ public class WebSocketManager {
 
     private static final String TAG = "WebSocketManager";
 
-    private static final String HOST = "192.168.1.5:3000";
+    private static final String HOST = "192.168.1.20:3000";
 
     private static final String HTTP_SCHEMA = "http://" + HOST;
 

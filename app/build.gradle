@@ -1,5 +1,8 @@
 apply plugin: 'com.android.application'
 
+Properties properties = new Properties()
+properties.load(new FileInputStream(project.rootProject.file("local.properties")))
+
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.0"
@@ -11,11 +14,47 @@ android {
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
-    buildTypes {
+
+    signingConfigs {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            storeFile file('msc.jks')
+            storePassword 'msc_android'
+            keyAlias 'msc_android'
+            keyPassword 'msc_android'
         }
+    }
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.release
+        }
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+
+    sourceSets {
+        main {
+            jni.srcDirs = []
+            jniLibs.srcDirs = ['libs', 'src/main/jniLibs']
+        }
+    }
+
+    task ndkBuild(type: Exec, description: 'Compile JNI source via NDK') {
+        commandLine properties['ndk.dir'] + "/ndk-build",
+                'NDK_PROJECT_PATH=build/intermediates/ndk',
+                'NDK_LIBS_OUT=src/main/jniLibs',
+                'APP_BUILD_SCRIPT=src/main/jni/Android.mk',
+                'NDK_APPLICATION_MK=src/main/jni/Application.mk'
+    }
+
+    tasks.withType(JavaCompile) {
+        compileTask -> compileTask.dependsOn ndkBuild
+    }
+
+    lintOptions {
+        abortOnError false
     }
 }
 

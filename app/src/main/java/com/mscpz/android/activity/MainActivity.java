@@ -3,6 +3,7 @@ package com.mscpz.android.activity;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.widget.TextView;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -14,14 +15,19 @@ import com.hosopy.actioncable.ActionCableException;
 import com.hosopy.actioncable.Channel;
 import com.hosopy.actioncable.Consumer;
 import com.hosopy.actioncable.Subscription;
+import com.mscpz.android.CabinetManager;
 import com.mscpz.android.R;
 import com.mscpz.android.net.FormStringRequest;
 import com.mscpz.android.net.RequestManager;
 import com.mscpz.android.net.URL;
+import com.mscpz.android.util.DeviceUtils;
+import com.mscpz.android.util.ListUtils;
+import com.mscpz.android.util.LogManager;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,16 +38,37 @@ public class MainActivity extends BaseActivity {
 
     private static final String TAG = "MainActivity";
 
+    private TextView tvDevices;
+
+    private TextView tvDeviceId;
+
+    private TextView tvError;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
 
+        tvDevices = (TextView) findViewById(R.id.tv_devices);
+        tvDeviceId = (TextView) findViewById(R.id.tv_device_id);
+        tvError = (TextView) findViewById(R.id.tv_error);
+
+        try {
+//            CabinetManager.getInstance().init();
+            tvError.setText("设备打开成功");
+        } catch (Exception e) {
+            tvError.setText(Log.getStackTraceString(e));
+        }
+        showDevices();
+
+        LogManager.d(TAG, "deviceId: " + DeviceUtils.getDeviceId(this));
+        tvDeviceId.setText(DeviceUtils.getDeviceId(this));
+
 //        WebSocketManager.getInstance().init();
 
         try {
-            URI uri = new URI("ws://192.168.1.5:3000/cable");
+            URI uri = new URI("ws://mscpz.com/cable");
 
             Consumer.Options options = new Consumer.Options();
             options.reconnection = true;
@@ -49,7 +76,7 @@ public class MainActivity extends BaseActivity {
             options.reconnectionMaxAttempts = Integer.MAX_VALUE;
             Map<String, String> headers = new HashMap<>();
             headers.put(RequestManager.HEADER_DEVICE_TYPE, "0");
-            headers.put(RequestManager.HEADER_DEVICE_ID, "test");
+            headers.put(RequestManager.HEADER_DEVICE_ID, DeviceUtils.getDeviceId(this));
             options.headers = headers;
             Consumer consumer = ActionCable.createConsumer(uri, options);
 
@@ -118,5 +145,10 @@ public class MainActivity extends BaseActivity {
         });
         request.addParam("user_id", userId.toString());
         RequestManager.getInstance().addRequest(request);
+    }
+
+    private void showDevices() {
+        List<String> devices = CabinetManager.getAllDevices();
+        tvDevices.setText(ListUtils.toString(devices));
     }
 }
