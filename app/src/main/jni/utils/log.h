@@ -3,7 +3,7 @@
 
 #include <android/log.h>
 
-#define TAG "msc_web"
+#define TAG "MainActivity"
 
 #define LOG_INFO(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 #define LOG_DEBUG(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)

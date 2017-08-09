@@ -98,23 +98,31 @@ jobject serial_port_open(JNIEnv *env, jclass thiz, jstring path, jint baudrate, 
 		LOG_DEBUG("Configuring serial port");
 		if (tcgetattr(fd, &cfg))
 		{
+		    LOG_ERROR("tcgetattr() failed: %s", strerror(errno));
 		    close(fd);
 		    char msg[1024];
 		    sprintf(msg, "tcgetattr() failed: %s", strerror(errno));
 		    throw_exception(env, msg);
 		}
 
+        LOG_ERROR("B19200: %d", B19200);
+		LOG_ERROR("B9600: %d", B9600);
+		LOG_ERROR("input speed: %d", cfgetispeed(&cfg));
+		LOG_ERROR("output speed: %d", cfgetospeed(&cfg));
+
+/*
 		cfmakeraw(&cfg);
 		cfsetispeed(&cfg, speed);
 		cfsetospeed(&cfg, speed);
 
 		if (tcsetattr(fd, TCSANOW, &cfg))
 		{
+		    LOG_ERROR("tcsetattr() failed: %s", strerror(errno));
 			close(fd);
 			char msg[1024];
 			sprintf(msg, "tcsetattr() failed: %s", strerror(errno));
 			throw_exception(env, msg);
-		}
+		}*/
 	}
 
 	/* Create a corresponding file descriptor */

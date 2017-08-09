@@ -1,8 +1,13 @@
 package com.mscpz.android.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.android.volley.Request;
@@ -21,6 +26,7 @@ import com.mscpz.android.net.FormStringRequest;
 import com.mscpz.android.net.RequestManager;
 import com.mscpz.android.net.URL;
 import com.mscpz.android.util.DeviceUtils;
+import com.mscpz.android.util.HexDumpUtil;
 import com.mscpz.android.util.ListUtils;
 import com.mscpz.android.util.LogManager;
 
@@ -44,6 +50,20 @@ public class MainActivity extends BaseActivity {
 
     private TextView tvError;
 
+    private Handler handler = new Handler();
+
+    private EditText etBoardNo;
+
+    private EditText etLockerNo;
+
+    private Button btnOpen;
+
+    private Button btnReadState;
+
+    private TextView tvReturn;
+
+    private TextView tvCmd;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,21 +74,62 @@ public class MainActivity extends BaseActivity {
         tvDeviceId = (TextView) findViewById(R.id.tv_device_id);
         tvError = (TextView) findViewById(R.id.tv_error);
 
+        etBoardNo = (EditText) findViewById(R.id.et_board_no);
+        etLockerNo = (EditText) findViewById(R.id.et_locker_no);
+        btnOpen = (Button) findViewById(R.id.btn_open);
+        btnReadState = (Button) findViewById(R.id.btn_read_state);
+        tvReturn = (TextView) findViewById(R.id.tv_return);
+        tvCmd = (TextView) findViewById(R.id.tv_cmd);
+
+        byte[] cmd = CabinetManager.buildOpenLockerCmd(19, 1);
+        LogManager.d(TAG, HexDumpUtil.formatHexDump(cmd, 0, cmd.length));
+
         try {
-//            CabinetManager.getInstance().init();
-            tvError.setText("设备打开成功");
-        } catch (Exception e) {
-            tvError.setText(Log.getStackTraceString(e));
+            CabinetManager.getInstance().init(tvReturn);
+            LogManager.d(TAG, "设备打开成功");
+        } catch (Throwable e) {
+            LogManager.d(TAG, Log.getStackTraceString(e));
         }
         showDevices();
 
         LogManager.d(TAG, "deviceId: " + DeviceUtils.getDeviceId(this));
         tvDeviceId.setText(DeviceUtils.getDeviceId(this));
 
+//        handler.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                LogManager.d(TAG, "send data");
+//                CabinetManager.getInstance().sendData(new byte[]{0x13, (byte) 0xF2, 0x55, 0x01, 0x01, 0x5B});
+//            }
+//        }, 5000);
+
 //        WebSocketManager.getInstance().init();
+
+        btnOpen.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int boardNo = Integer.parseInt(etBoardNo.getText().toString());
+                int lockerNo = Integer.parseInt(etLockerNo.getText().toString());
+                byte[] cmd = CabinetManager.buildOpenLockerCmd(boardNo, lockerNo);
+                tvCmd.setText(HexDumpUtil.formatHexDump(cmd, 0, cmd.length));
+                CabinetManager.getInstance().openLocker(boardNo, lockerNo);
+            }
+        });
+
+        btnReadState.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int boardNo = Integer.parseInt(etBoardNo.getText().toString());
+                int lockerNo = Integer.parseInt(etLockerNo.getText().toString());
+                byte[] cmd = CabinetManager.buildReadLockerCmd(boardNo, lockerNo);
+                tvCmd.setText(HexDumpUtil.formatHexDump(cmd, 0, cmd.length));
+                CabinetManager.getInstance().readState(boardNo, lockerNo);
+            }
+        });
 
         try {
             URI uri = new URI("ws://mscpz.com/cable");
+//            URI uri = new URI("ws://192.168.1.5:3000/cable");
 
             Consumer.Options options = new Consumer.Options();
             options.reconnection = true;
@@ -81,7 +142,7 @@ public class MainActivity extends BaseActivity {
             Consumer consumer = ActionCable.createConsumer(uri, options);
 
             Channel cabinetChannel = new Channel("CabinetChannel");
-            Subscription subscription = consumer.getSubscriptions().create(cabinetChannel);
+            final Subscription subscription = consumer.getSubscriptions().create(cabinetChannel);
 
             subscription.onConnected(new Subscription.ConnectedCallback() {
                 @Override
@@ -101,8 +162,17 @@ public class MainActivity extends BaseActivity {
                     // Called when the subscription receives data from the server
                     Log.d(TAG, "onReceived: " + data.toString());
                     JsonObject jsonObject = data.getAsJsonObject();
-                    Long userId = jsonObject.getAsJsonPrimitive("user_id").getAsLong();
-                    sendMsg(userId);
+                    String action = jsonObject.getAsJsonPrimitive("action").getAsString();
+                    if (action.equals("open")) {
+                        int boardNo = jsonObject.getAsJsonPrimitive("board_no").getAsInt();
+                        int lockerNo = jsonObject.getAsJsonPrimitive("locker_no").getAsInt();
+                        CabinetManager.getInstance().openLocker(boardNo, lockerNo);
+                    } else if (action.equals("read")) {
+                        int boardNo = jsonObject.getAsJsonPrimitive("board_no").getAsInt();
+                        int lockerNo = jsonObject.getAsJsonPrimitive("locker_no").getAsInt();
+                        CabinetManager.getInstance().readState(boardNo, lockerNo);
+                    }
+//                    sendMsg(userId);
                 }
             }).onDisconnected(new Subscription.DisconnectedCallback() {
                 @Override
