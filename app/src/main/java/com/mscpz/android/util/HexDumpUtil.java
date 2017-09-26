@@ -7,6 +7,7 @@ import java.io.UnsupportedEncodingException;
  */
 
 public final class HexDumpUtil {
+
     public static String formatHexDump(byte[] array, int offset, int length) {
         final int width = 16;
 
@@ -36,6 +37,27 @@ public final class HexDumpUtil {
             builder.append(String.format("%n"));
         }
 
+        return builder.toString();
+    }
+
+    public static String formatByte(byte b) {
+        return formatByte(b, "0x");
+    }
+
+    public static String formatByte(byte b, String prefix) {
+        return String.format(prefix + "%02x ", b);
+    }
+
+    public static String formatByteArray(byte[] arr) {
+        StringBuilder builder = new StringBuilder();
+        if (arr != null) {
+            for (int i = 0; i < arr.length; ++i) {
+                if (i != 0) {
+                    builder.append(" ");
+                }
+                builder.append(formatByte(arr[i]));
+            }
+        }
         return builder.toString();
     }
 }

@@ -42,6 +42,10 @@ public class Msc {
 
     private String deviceIdForUmeng;
 
+    private boolean debuggable = false;
+
+    private boolean showDashboard = false;
+
     private Msc() {
     }
 
@@ -57,10 +61,18 @@ public class Msc {
     }
 
     public void init(Context applicationContext) {
-        LogManager.init(true);
+        LogManager.init(isDebuggable());
 
         applicationContextWeakRef = new WeakReference<Context>(applicationContext);
         handler = new Handler();
+    }
+
+    public boolean isDebuggable() {
+        return this.debuggable;
+    }
+
+    public boolean isShowDashboard() {
+        return this.showDashboard;
     }
 
     public Context getApplicationContext() {
