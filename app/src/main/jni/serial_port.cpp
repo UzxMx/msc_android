@@ -110,8 +110,12 @@ jobject serial_port_open(JNIEnv *env, jclass thiz, jstring path, jint baudrate, 
 		LOG_ERROR("input speed: %d", cfgetispeed(&cfg));
 		LOG_ERROR("output speed: %d", cfgetospeed(&cfg));
 
-/*
+
+        /*
 		cfmakeraw(&cfg);
+		LOG_ERROR("PARENB: %d", cfg.c_cflag & PARENB);
+		LOG_ERROR("CS7: %d", cfg.c_cflag & CS7);
+		LOG_ERROR("CS8: %d", cfg.c_cflag & CS8);
 		cfsetispeed(&cfg, speed);
 		cfsetospeed(&cfg, speed);
 
@@ -122,7 +126,8 @@ jobject serial_port_open(JNIEnv *env, jclass thiz, jstring path, jint baudrate, 
 			char msg[1024];
 			sprintf(msg, "tcsetattr() failed: %s", strerror(errno));
 			throw_exception(env, msg);
-		}*/
+		}
+		*/
 	}
 
 	/* Create a corresponding file descriptor */
