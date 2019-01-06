@@ -46,7 +46,7 @@ public class DefaultProxy implements CabinetProxy {
     private static final String ERRNO_READ_STATE_FAILED_STR = "查询状态失败";
 
     // TODO init device path
-    private static final String DEVICE_PATH = "/dev/ttymxc3";
+    private static final String DEVICE_PATH = "/dev/ttyS0";
 //    private static final String DEVICE_PATH = "/dev/ttyS2";
 
     private SerialPort serialPort;

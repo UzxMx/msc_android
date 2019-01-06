@@ -44,7 +44,7 @@ public class Msc {
 
     private boolean debuggable = false;
 
-    private boolean showDashboard = false;
+    private boolean showDashboard = true;
 
     private Msc() {
     }
@@ -61,7 +61,7 @@ public class Msc {
     }
 
     public void init(Context applicationContext) {
-        LogManager.init(isDebuggable());
+        LogManager.init(false);
 
         applicationContextWeakRef = new WeakReference<Context>(applicationContext);
         handler = new Handler();
